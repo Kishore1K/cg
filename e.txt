@@ -1,0 +1,896 @@
+//prg1 
+
+
+#include<stdio.h>
+#include<math.h>
+#include<GL/glut.h>
+
+int xstart, ystart, xend, yend;
+void init()
+{
+	gluOrtho2D(0, 500, 0, 500);
+}
+
+void draw_pixel(int x, int y)
+{
+	glColor3f(1, 0, 0);
+	glBegin(GL_POINTS);
+	glVertex2i(x, y);
+	glEnd();
+	glFlush();
+}
+
+void LineBres(int xstart, int ystart, int xend, int yend)
+{
+	int dx = abs(xend - xstart);
+	int dy = abs(yend - ystart);
+	int twody = 2 * dy, twodyminusdx = 2 * (dy - dx);
+	int p = 2 * dy - dx;
+	int x, y;
+	if (xstart > xend)
+	{
+		x = xend;
+		y = yend;
+		xend = xstart;
+	}
+	else
+	{
+		x = xstart;
+		y = ystart;
+
+	}
+	draw_pixel(x, y);
+	while (x < xend)
+	{
+		x++;
+		if (p < 0)
+			p += twody;
+		else
+		{
+			y++;
+			p += twodyminusdx;
+		}
+		draw_pixel(x, y);
+	}
+}
+
+void Display()
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(0, 0, 0, 1);
+	LineBres(xstart, ystart, xend, yend);
+	glEnd();
+	glFlush();
+}
+
+int main(int argc, char** argv)
+{
+	printf("Enter (x1, y1, x2, y2)\n");
+	scanf_s("%d%d%d%d", &xstart, &ystart, &xend, &yend);
+	glutInit(&argc, argv);
+	glutInitWindowPosition(50, 50);
+	glutInitWindowSize(500, 500);
+	glutCreateWindow("Bresenham's Line Drawing");
+	init();
+	glutDisplayFunc(Display);
+	glutMainLoop();
+	return 0;
+}
+///////
+pr2 triangle (c++)
+
+
+#include<GL/glut.h>
+#include<stdio.h>
+#include<math.h>
+GLfloat triangle[3][3]={{200.0,300.0,250.0},{200.0,200.0,300.0},{0.0,0.0,0.0}};
+float matRot[3][3]={{0.0},{0.0},{0.0}};
+GLfloat res[3][3]={{0.0},{0.0},{0.0}};
+GLfloat theta=0.0;
+void Rotate_point()
+{
+int i,j,l;
+matRot[0][0]=cos(theta);
+matRot[0][1]=-sin(theta);
+matRot[0][2]=0;
+matRot[1][0]=sin(theta);
+matRot[1][1]=cos(theta);
+matRot[1][2]=0;
+matRot[2][0]=0;
+matRot[2][1]=0;
+matRot[2][2]=1;
+for(i=0;i<3;i++)
+for(j=0;j<3;j++)
+{
+res[i][j]=0;
+for(l=0;l<3;l++)
+{
+res[i][j]+=matRot[i][l]*triangle[l][j];
+}
+}
+}
+void inp_triangle()
+{
+glBegin(GL_LINE_LOOP);
+glVertex2f(triangle[0][0],triangle[1][0]);
+glVertex2f(triangle[0][1],triangle[1][1]);
+glVertex2f(triangle[0][2],triangle[1][2]);
+glEnd();
+glFlush();
+}
+void Out_triangle()
+{
+glBegin(GL_LINE_LOOP);
+glVertex2f(res[0][0],res[1][0]);
+glVertex2f(res[0][1],res[1][1]);
+glVertex2f(res[0][2],res[1][2]);
+glEnd();
+glFlush();
+}
+void display()
+{
+glClear(GL_COLOR_BUFFER_BIT);
+glColor3f(1.0,0.0,0.0);
+inp_triangle();
+glColor3f(0.0,1.0,0.0);
+glTranslatef(50.0,0.0,0.0);
+Rotate_point();
+Out_triangle();
+glPushMatrix();
+glColor3f(0.0,0.0,1.0);
+glTranslatef(300.0,100.0,0.0);
+Rotate_point();
+glTranslatef(-200.0,-200.0,0.0);
+Out_triangle();
+glPopMatrix();
+glFlush();
+}
+void reshape(GLint w,GLint h)
+{
+glViewport(0,0,w,h);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+gluOrtho2D(0,500,0,500);
+glutPostRedisplay();
+glFlush();
+}
+int main(int argc,char **argv)
+{
+printf("enter the angle of rotation\n");
+scanf("%f",&theta);
+theta=theta*3.14/180;
+glutInit(&argc,argv);
+glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);
+glutInitWindowSize(800,800);
+glutInitWindowPosition(0,0);
+glutCreateWindow("2d");
+glutDisplayFunc(display);
+glEnable(GL_DEPTH_TEST);
+glutReshapeFunc(reshape);
+glClearColor(0.0,0.0,0.0,0.0);
+glutMainLoop();
+}
+ 
+////
+
+prg3 spin cube
+
+#include<GL/glut.h>
+#include<stdio.h>
+GLfloat vertices[][3] = { {-1.0,-1.0,-1.0},{1.0,-1.0,-1.0},{1.0,1.0,-1.0},{-1.0,1.0,-1.0},
+{-1.0,-1.0,1.0},{1.0,-1.0,1.0},{1.0,1.0,1.0},{-1.0,1.0,1.0} };
+GLfloat colors[][3] = { {0.0,0.0,0.0},{0.0,0.0,1.0},{0.0,1.0,0.0},{0.0,1.0,1.0},{1.0,0.0,0.0},
+{1.0,0.0,1.0},{1.0,1.0,0.0},{1.0,1.0,1.0} };
+static GLfloat theta[] = { 0.0,0.0,0.0 };
+static GLint axis = 2;
+static GLdouble viewer[] = { 0,0,5 };
+void polygon(int a, int b, int c, int d)
+{
+	glBegin(GL_POLYGON);
+	glColor3fv(colors[a]);
+	glVertex3fv(vertices[a]);
+	glColor3fv(colors[b]);
+	glVertex3fv(vertices[b]);
+	glColor3fv(colors[c]);
+	glVertex3fv(vertices[c]);
+	glColor3fv(colors[d]);
+	glVertex3fv(vertices[d]);
+	glEnd();
+}
+void colorcube()
+{
+	polygon(0, 3, 2, 1);
+	polygon(2, 3, 7, 6);
+	polygon(1, 2, 6, 5);
+	polygon(0, 4, 5, 1);
+	polygon(4, 5, 6, 7);
+	polygon(0, 3, 7, 4);
+}
+void display()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+	glRotatef(theta[0], 1.0, 0.0, 0.0);
+	glRotatef(theta[1], 0.0, 1.0, 0.0);
+	glRotatef(theta[2], 0.0, 0.0, 1.0);
+	colorcube();
+	glFlush();
+	glutSwapBuffers();
+}
+void spincube()
+{
+	theta[axis] += 2.0;
+	if (theta[axis] > 360.0)
+		theta[axis] -= 360.0;
+	glutPostRedisplay();
+}
+void mouse(int btn, int state)
+{
+	if (btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+		axis = 0;
+	if (btn == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+		axis = 1;
+	if (btn == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+		axis = 2;
+	spincube();
+}
+void myreshape(int w, int h)
+{
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	if (w <= h)
+		glOrtho(-2.0, 2.0, -2.0 * (GLfloat)h / (GLfloat)w, 2.0 * (GLfloat)h / (GLfloat)w, -10.0, 10.0);
+	else
+		glOrtho(-2.0 * (GLfloat)w / (GLfloat)h, 2.0 * (GLfloat)w / (GLfloat)h, -2.0, 2.0, -10.0, 10.0);
+	glMatrixMode(GL_MODELVIEW);
+	glutPostRedisplay();
+}
+int main(int argc, char** argv)
+{
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutCreateWindow("Color cube");
+	glutReshapeFunc(myreshape);
+	glutDisplayFunc(display);
+	glutIdleFunc(spincube);
+	glutMouseFunc(mouse);
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glutMainLoop();
+}
+
+//////
+4 color cube
+#include<GL/glut.h>
+#include<stdio.h>
+GLfloat vertices[][3] = { {-1.0,-1.0,-1.0},
+{1.0,-1.0,-1.0},
+{1.0,1.0,-1.0},
+{-1.0,1.0,-1.0},
+{-1.0,-1.0,1.0},
+{1.0,-1.0,1.0},
+{1.0,1.0,1.0},
+{-1.0,1.0,1.0} };
+GLfloat colors[][3] = { {0.0,0.0,0.0},
+{0.0,0.0,1.0},
+{0.0,1.0,0.0},
+{0.0,1.0,1.0},
+{1.0,0.0,0.0},
+{1.0,0.0,1.0},
+{1.0,1.0,0.0},
+{1.0,1.0,1.0} };
+static GLfloat theta[] = { 0.0,0.0,0.0 };
+static GLint axis = 2;
+static GLdouble viewer[] = { 0,0,5 };
+void polygon(int a, int b, int c, int d)
+{
+	glBegin(GL_POLYGON);
+	glColor3fv(colors[a]);
+	glVertex3fv(vertices[a]);
+	glColor3fv(colors[b]);
+	glVertex3fv(vertices[b]);
+	glColor3fv(colors[c]);
+	glVertex3fv(vertices[c]);
+	glColor3fv(colors[d]);
+	glVertex3fv(vertices[d]);
+	glEnd();
+}
+void colorcube()
+{
+	polygon(0, 3, 2, 1);
+	polygon(2, 3, 7, 6);
+	polygon(1, 2, 6, 5);
+	polygon(0, 4, 5, 1);
+	polygon(4, 5, 6, 7);
+	polygon(0, 3, 7, 4);
+}
+void display()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+	gluLookAt(viewer[0], viewer[1], viewer[2], 0, 0, 0, 0, 1, 0);
+	glRotatef(theta[0], 1.0, 0.0, 0.0);
+	glRotatef(theta[1], 0.0, 1.0, 0.0);
+	glRotatef(theta[2], 0.0, 0.0, 1.0);
+	colorcube();
+	glFlush();
+	glutSwapBuffers();
+}
+void myreshape(int w, int h)
+{
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	if (w <= h)
+		glFrustum(-2, 2, -2 * (GLfloat)h / (GLfloat)w, 2 * (GLfloat)h / (GLfloat)w, 2, 20);
+	else
+		glFrustum(-2 * (GLfloat)w / (GLfloat)h, 2 * (GLfloat)w / (GLfloat)h, -2, 2, 2, 20);
+	glMatrixMode(GL_MODELVIEW);
+	glutPostRedisplay();
+}
+void myMouse(int btn, int state, int x, int y)
+{
+	if (btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+		axis = 0;
+	if (btn == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+		axis = 1;
+	if (btn == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+		axis = 2;
+	theta[axis] += 2.0;
+	if (theta[axis] > 360.0)
+		theta[axis] -= 360.0;
+	display();
+}
+void keys(unsigned char key, int x, int y)
+{
+	if (key == 'x') viewer[0] -= 1;
+	if (key == 'X') viewer[0] += 1;
+	if (key == 'y') viewer[1] -= 1;
+	if (key == 'Y') viewer[1] += 1;
+	if (key == 'z') viewer[2] -= 1;
+	if (key == 'Z') viewer[2] += 1;
+	display();
+}
+int main(int argc, char** argv)
+{
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutCreateWindow("colorcube");
+	glutReshapeFunc(myreshape);
+	glutDisplayFunc(display);
+	glutMouseFunc(myMouse);
+	glutKeyboardFunc(keys);
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glutMainLoop();
+}
+///
+
+prg5 cohen 
+
+#include<GL/glut.h>
+#include<stdio.h>
+#define outcode int 
+const int L = 1, R = 2, B = 4, T = 8;
+float x0, y00, x1, y11;
+float xmin = 50.0, ymin = 50.0, xmax = 150.0, ymax = 150.0, xvmin = 200, yvmin = 200, xvmax = 300,
+yvmax = 300;
+outcode compute(float x, float y)
+{
+	outcode code = 0;
+	if (y > ymax) code = T;
+	else if (y < ymin) code = B;
+	else if (x > xmax) code = R;
+	else if (x < xmin) code = L;
+	return code;
+}
+void cohen(float x0, float y00, float x1, float y11)
+{
+	outcode outcode0, outcode1, outcodeout;
+	int accept = 0, done = 0;
+	outcode0 = compute(x0, y00);
+	outcode1 = compute(x1, y11);
+	do
+	{
+		if (!(outcode0 | outcode1))
+		{
+			accept = 1, done = 1;
+		}
+		else if (outcode0 & outcode1)
+			done = 1;
+		else
+		{
+			outcodeout = outcode0 ? outcode0 : outcode1;
+			float x, y;
+			if (outcodeout & T)
+			{
+				x = x0 + (ymax - y00) * (x1 - x0) / (y11 - y00);
+				y = ymax;
+			}
+			else if (outcodeout & B)
+			{
+				x = x0 + (ymin - y00) * (x1 - x0) / (y11 - y00);
+				y = ymin;
+			}
+			else if (outcodeout & R)
+			{
+				y = y00 + (xmax - x0) * (y11 - y00) / (x1 - x0);
+				x = xmax;
+			}
+			else
+			{
+				y = y00 + (xmin - x0) * (y11 - y00) / (x1 - x0);
+				x = xmin;
+			}
+			if (outcodeout == outcode0)
+			{
+				x0 = x;
+				y00 = y;
+				outcode0 = compute(x0, y00);
+			}
+			else
+			{
+				x1 = x, y11 = y;
+				outcode1 = compute(x1, y11);
+			}
+		}
+	} while (!done);
+	if (accept)
+	{
+		float sx, sy, vx0, vx1, vy00, vy11;
+		sx = (xvmax - xvmin) / (xmax - xmin);
+		sy = (yvmax - yvmin) / (ymax - ymin);
+		vx0 = xvmin + (x0 - xmin) * sx;
+		vy00 = yvmin + (y00 - ymin) * sy;
+		vx1 = xvmin + (x1 - xmin) * sx;
+		vy11 = yvmin + (y11 - ymin) * sy;
+		glColor3f(0.0, 1.0, 0.0);
+		glBegin(GL_LINE_LOOP);
+		glVertex2f(xvmin, yvmin);
+		glVertex2f(xvmax, yvmin);
+		glVertex2f(xvmax, yvmax);
+		glVertex2f(xvmin, yvmax);
+		glEnd();
+		glColor3f(0.0, 0.0, 1.0);
+		glBegin(GL_LINES);
+		glVertex2f(vx0, vy00);
+		glVertex2f(vx1, vy11);
+		glEnd();
+	}
+}
+void display()
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(1.0, 0.0, 0.0);
+	glBegin(GL_LINE_LOOP);
+	glVertex2f(xmin, ymin);
+	glVertex2f(xmax, ymin);
+	glVertex2f(xmax, ymax);
+	glVertex2f(xmin, ymax);
+	glEnd();
+	glColor3f(0.0, 0.0, 1.0);
+	glBegin(GL_LINES);
+	glVertex2f(x0, y00);
+	glVertex2f(x1, y11);
+	glEnd();
+	cohen(x0, y00, x1, y11);
+	glFlush();
+}
+void init() {
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0.0, 499.0, 0.0, 499.0);
+}
+int main(int argc, char** argv) {
+	printf("Enter the line coordinates\n");
+	scanf_s("%f%f%f%f", &x0, &y00, &x1, &y11);
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+	glutInitWindowSize(500, 500);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("cohen");
+	glutDisplayFunc(display);
+	init();
+	glutMainLoop();
+}
+
+
+//////
+
+prg 6 Tea pot
+
+#include<GL/glut.h>
+void wall(double thickness)
+{
+	glPushMatrix();
+	glTranslated(0.5, 0.5 * thickness, 0.5);
+	glScaled(1.0, thickness, 1.0);
+	glutSolidCube(1.0);
+	glPopMatrix();
+}
+void tableleg(double thick, double len)
+{
+	glPushMatrix();
+	glTranslated(0, len / 2.0, 0);
+	glScaled(thick, len, thick);
+	glutSolidCube(1.0);
+	glPopMatrix();
+}
+void table(double topwid, double topthick, double legthick, double leglen)
+{
+	glPushMatrix();
+	glTranslated(0, leglen, 0);
+	glScaled(topwid, topthick, topwid);
+	glutSolidCube(1.0);
+	glPopMatrix();
+	double dist = 0.95 * topwid / 2 - legthick / 2;
+	glPushMatrix();
+	glTranslated(dist, 0, dist);
+	tableleg(legthick, leglen);
+	glTranslated(0, 0, -2 * dist);
+	tableleg(legthick, leglen);
+	glTranslated(-2 * dist, 0, 2 * dist);
+	tableleg(legthick, leglen);
+	glTranslated(0, 0, -2 * dist);
+	tableleg(legthick, leglen);
+	glPopMatrix();
+}
+void display()
+{
+	GLfloat mat_ambient[] = { 0.7f,0.7f,0.7f,1.0f };
+	GLfloat mat_diffuse[] = { 0.5f,0.5f,0.5f,1.0f };
+	GLfloat mat_specular[] = { 1.0f,1.0f,1.0f,1.0f };
+	GLfloat mat_shininess[] = { 50.0f };
+	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+	GLfloat Lightintensity[] = { 1.0f,1.0f,1.0f,1.0f };
+	GLfloat Lightposition[] = { 2.0f,6.0f,3.0f,0.0f };
+	glLightfv(GL_LIGHT0, GL_POSITION, Lightposition);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, Lightintensity);
+	double winht = 1.0;
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-winht * 64 / 48.0, winht * 64 / 48.0, -winht, winht, 0.1, 100.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(2.3, 1.3, 2.0, 0.0, 0.25, 0.0, 0.0, 1.0, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glPushMatrix();
+	glTranslated(0.5, 0.38, 0.5);
+	glRotated(60, 0, 1, 0);
+	glutSolidTeapot(0.08);
+	glPopMatrix();
+	glPushMatrix();
+	glTranslated(0.4, 0, 0.4);
+	table(0.6, 0.02, 0.02, 0.3);
+	glPopMatrix();
+	wall(0.02);
+	glPushMatrix();
+	glRotated(90.0, 0.0, 0.0, 1.0);
+	wall(0.02);
+	glPopMatrix();
+	glPushMatrix();
+	glRotated(-90.0, 1.0, 0.0, 0.0);
+	wall(0.02);
+	glPopMatrix();
+	glFlush();
+}
+int main(int argc, char** argv)
+{
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
+	glutCreateWindow("Tea pot");
+	glutInitWindowSize(500, 500);
+	glutInitWindowPosition(0, 0);
+	glutDisplayFunc(display);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_NORMALIZE);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glutMainLoop();
+}
+
+/////
+prg 7 serpenski gasket
+#include <GL/glut.h>
+#include <stdio.h>
+typedef float point[3];
+point v[] = { {0.0,0.0,1.0},{0.0,1.0,0.0},{-1.0,-0.5,0.0},{1.0,-0.5,0.0} };
+int n;
+void triangle(point a, point b, point c)
+{
+	glBegin(GL_POLYGON);
+	glVertex3fv(a);
+	glVertex3fv(b);
+	glVertex3fv(c);
+	glEnd();
+}
+void divide(point a, point b, point c, int m)
+{
+	point v1, v2, v3;
+	int j;
+	if (m > 0)
+	{
+		for (j = 0; j < 3; j++)
+			v1[j] = (a[j] + b[j]) / 2;
+		for (j = 0; j < 3; j++)
+			v2[j] = (a[j] + c[j]) / 2;
+		for (j = 0; j < 3; j++)
+			v3[j] = (b[j] + c[j]) / 2;
+		divide(a, v1, v2, m - 1);
+		divide(c, v2, v3, m - 1);
+		divide(b, v3, v1, m - 1);
+	}
+	else(triangle(a, b, c));
+}
+void tetra(int m)
+{
+	glColor3f(1.0, 0.0, 0.0);
+	divide(v[0], v[1], v[2], m);
+	glColor3f(0.0, 1.0, 0.0);
+	divide(v[3], v[2], v[1], m);
+	glColor3f(0.0, 0.0, 1.0);
+	divide(v[0], v[3], v[1], m);
+	glColor3f(1.0, 1.0, 1.0);
+	divide(v[0], v[2], v[3], m);
+}
+void display()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+	tetra(n);
+	glFlush();
+}
+void myreshape(int w, int h)
+{
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	if (w <= h)
+		glOrtho(-2.0, 2.0, -2.0 * (GLfloat)h / (GLfloat)w, 2.0 * (GLfloat)h / (GLfloat)w, -10.0, 10.0);
+	else
+		glOrtho(-2.0 * (GLfloat)w / (GLfloat)h, 2.0 * (GLfloat)w / (GLfloat)h, -2.0, 2.0, -10.0, 10.0);
+	glMatrixMode(GL_MODELVIEW);
+	glutPostRedisplay();
+}
+int main(int argc, char** argv)
+{
+	printf("Enter number of divisions");
+	scanf_s("%d", &n);
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
+	glutCreateWindow("GASKET");
+	glutReshapeFunc(myreshape);
+	glutDisplayFunc(display);
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glutMainLoop();
+}
+///
+prg8 brezers 
+#include<GL/glut.h>
+#include<stdio.h>
+#include<math.h>
+#define pi 3.14
+struct
+{
+	GLfloat x, y, z;
+}
+typedef wcpt;
+void bino(GLint n, GLint* c)
+{
+	GLint k, j;
+	for (k = 0; k <= n; k++)
+	{
+		c[k] = 1;
+		for (j = n; j >= k + 1; j--)
+			c[k] *= j;
+		for (j = n - k; j >= 2; j--)
+			c[k] /= j;
+	}
+}
+void combez(GLfloat u, wcpt* bezpt, GLint nctrpt, wcpt* ctrlpt, GLint* c)
+{
+	GLint k, n = nctrpt - 1;
+	GLfloat blendfunc;
+	bezpt->x = bezpt->y = bezpt->z = 0.0;
+	for (k = 0; k < nctrpt; k++)
+	{
+		blendfunc = c[k] * pow(u, k) * pow(1 - u, n - k);
+		bezpt->x += ctrlpt[k].x * blendfunc;
+		bezpt->y += ctrlpt[k].y * blendfunc;
+		bezpt->z += ctrlpt[k].z * blendfunc;
+	}
+}
+void bezier(wcpt* ctrlpt, GLint nctrpt, GLint nBezcurpts)
+{
+	wcpt bezcurpt;
+	GLfloat u;
+	GLint* c, k;
+	c = new GLint[nctrpt];
+	bino(nctrpt - 1, c);
+	glBegin(GL_LINE_STRIP);
+	for (k = 0; k <= nBezcurpts; k++)
+	{
+		u = GLfloat(k) / GLfloat(nBezcurpts);
+		combez(u, &bezcurpt, nctrpt, ctrlpt, c);
+		glVertex2f(bezcurpt.x, bezcurpt.y);
+	}
+	glEnd();
+	delete[]c;
+}
+void display()
+{
+	GLint nctrpt = 4, nBezcurpts = 20;
+	static float theta = 0;
+	wcpt ctrlpt[4] = { {20,100,0},{30,110,0},{50,90,0},{60,100,0} };
+	ctrlpt[1].x += 10 * sin(theta * pi / 180);
+	ctrlpt[1].y += 5 * sin(theta * pi / 180);
+	ctrlpt[2].x -= 10 * sin((theta + 30) * pi / 180);
+	ctrlpt[2].y -= 10 * sin((theta + 30) * pi / 180);
+	ctrlpt[3].x -= 4 * sin(theta * pi / 180);
+	ctrlpt[3].y -= sin((theta + 30) * pi / 180);
+	theta += 3;
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(1.0, 1.0, 1.0);
+	glPushMatrix();
+	glLineWidth(5);
+	glColor3f(1, 0, 0.15);
+	for (int i = 0; i < 8; i++)
+	{
+		glTranslatef(0, -0.8, 0);
+		bezier(ctrlpt, nctrpt, nBezcurpts);
+	}
+	glColor3f(1, 1, 1);
+	for (int i = 0; i < 8; i++)
+	{
+		glTranslatef(0, -0.8, 0);
+		bezier(ctrlpt, nctrpt, nBezcurpts);
+	}
+	glColor3f(0, 1, 0);
+	for (int i = 0; i < 8; i++)
+	{
+		glTranslatef(0, -0.8, 0);
+		bezier(ctrlpt, nctrpt, nBezcurpts);
+	}
+	glPopMatrix();
+	glColor3f(0.7, 0.5, 0.3);
+	glLineWidth(5);
+	glBegin(GL_LINES);
+	glVertex2f(20, 100);
+	glVertex2f(20, 40);
+	glEnd();
+	glFlush();
+	glutPostRedisplay();
+	glutSwapBuffers();
+}
+void Reshape(GLint w, GLint h)
+{
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0, 130, 0, 130);
+	glutPostRedisplay();
+	glFlush();
+}
+int main(int argc, char** argv)
+{
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+	glutInitWindowSize(500, 500);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("bazier");
+	glutDisplayFunc(display);
+	glutReshapeFunc(Reshape);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glutMainLoop();
+}
+//////
+prg 9 scan line 
+#include<GL/glut.h>
+float x1, x2, x3, x4, y1, y2, y3, y4;
+void draw_pixel(int x, int y)
+{
+	glColor3f(1.0, 0.0, 1.0);
+	glPointSize(1.0);
+	glBegin(GL_POINTS);
+	glVertex2i(x, y);
+	glEnd();
+}
+void edgedetect(float x1, float y1, float x2, float y2, int* le, int* re)
+{
+	float temp, x, mx;
+	int i;
+	if (y1 > y2)
+	{
+		temp = x1, x1 = x2, x2 = temp;
+		temp = y1, y1 = y2, y2 = temp;
+	}
+	if (y1 == y2)
+		mx = x2 - x1;
+	else
+		mx = (x2 - x1) / (y2 - y1);
+	x = x1;
+	for (i = (int)y1; i < (int)y2; i++)
+	{
+		if (x < (float)le[i])
+			le[i] = (int)x;
+		if (x > (float)re[i])
+			re[i] = (int)x;
+		x += mx;
+	}
+}
+void Scanfill(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+{
+	int le[500], re[500], i, j;
+	for (i = 0; i < 500; i++)
+		le[i] = 500, re[i] = 0;
+	edgedetect(x1, y1, x2, y2, le, re);
+	edgedetect(x2, y2, x3, y3, le, re);
+	edgedetect(x3, y3, x4, y4, le, re);
+	edgedetect(x4, y4, x1, y1, le, re);
+	for (j = 0; j < 500; j++)
+	{
+		if (le[j] <= re[j])
+			for (i = le[j]; i < re[j]; i++)
+				draw_pixel(i, j);
+	}
+}
+void filloption(GLint selectedoption)
+{
+	switch (selectedoption)
+	{
+	case 1:
+		Scanfill(x1, y1, x2, y2, x3, y3, x4, y4);
+		break;
+	case 2:
+		exit(0);
+		break;
+	}
+}
+void Reshape(GLint w, GLint h)
+{
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0, 500, 0, 500);
+	glutPostRedisplay();
+	glFlush();
+}
+void display()
+{
+	x1 = 250.0, y1 = 200.0, x2 = 150.0, y2 = 300.0, x3 = 250.0, y3 = 400.0, x4 = 350.0, y4 = 300.0;
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(0.0, 0.0, 1.0);
+	glBegin(GL_LINE_LOOP);
+	glVertex2f(x1, y1);
+	glVertex2f(x2, y2);
+	glVertex2f(x3, y3);
+	glVertex2f(x4, y4);
+	glEnd();
+	glFlush();
+}
+int main(int argc, char** argv)
+{
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+	glutInitWindowSize(500, 500);
+	glutInitWindowPosition(0, 0);
+	glutCreateWindow("polygon");
+	glutDisplayFunc(display);
+	glutCreateMenu(filloption);
+	glutAddMenuEntry("Scanfill", 1);
+	glutAddMenuEntry("exit", 2);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	glutReshapeFunc(Reshape);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glutMainLoop();
+}
+
+
+
